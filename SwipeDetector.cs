@@ -1,19 +1,20 @@
-﻿using System;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class SwipeDetector : MonoBehaviour
 {
-    Vector2 startPosition;
-    Vector2 lastPosition;
-    Vector2 endPosition;
+    Vector2 _startPosition;
+    Vector2 _lastPosition;
+    Vector2 _endPosition;
 
     [SerializeField]
-    bool detectSwipeOnlyAfterRelease = false;
+    bool _detectSwipeOnlyAfterRelease = false;
 
     [SerializeField]
-    float minDistanceForSwipe = 20f;
+    float _minDistanceForSwipe = 20f;
 
-    public static event Action<SwipeData> OnSwipe = delegate { };
+    public static event System.Action<SwipeData> OnSwipe = delegate { };
 
     void Update ()
     {
@@ -21,19 +22,19 @@ public class SwipeDetector : MonoBehaviour
         {
             if (touch.phase == TouchPhase.Began)
             {
-                endPosition = touch.position;
-                startPosition = touch.position;
+                _endPosition = touch.position;
+                _startPosition = touch.position;
             }
 
-            if (!detectSwipeOnlyAfterRelease && touch.phase == TouchPhase.Moved)
+            if (!_detectSwipeOnlyAfterRelease && touch.phase == TouchPhase.Moved)
             {
-                lastPosition = touch.position;
+                _lastPosition = touch.position;
                 var direction = DetectSwipeDirection ();
                 SendSwipe (direction);
             }
             else if (touch.phase == TouchPhase.Ended)
             {
-                lastPosition = touch.position;
+                _lastPosition = touch.position;
                 var direction = DetectSwipeDirection ();
                 SendSwipe (direction);
             }
@@ -47,13 +48,13 @@ public class SwipeDetector : MonoBehaviour
         {
             if (IsVerticalSwipe ())
             {
-                direction = lastPosition.y - endPosition.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
+                direction = _lastPosition.y - _endPosition.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
             }
             else
             {
-                direction = lastPosition.x - endPosition.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
+                direction = _lastPosition.x - _endPosition.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
             }
-            endPosition = lastPosition;
+            _endPosition = _lastPosition;
         }
         return direction;
     }
@@ -65,17 +66,17 @@ public class SwipeDetector : MonoBehaviour
 
     bool SwipeDistanceCheckMet ()
     {
-        return VerticalMovementDistance () > minDistanceForSwipe || HorizontalMovementDistance () > minDistanceForSwipe;
+        return VerticalMovementDistance () > _minDistanceForSwipe || HorizontalMovementDistance () > _minDistanceForSwipe;
     }
 
     float VerticalMovementDistance ()
     {
-        return Mathf.Abs (lastPosition.y - endPosition.y);
+        return Mathf.Abs (_lastPosition.y - _endPosition.y);
     }
 
     float HorizontalMovementDistance ()
     {
-        return Mathf.Abs (lastPosition.x - endPosition.x);
+        return Mathf.Abs (_lastPosition.x - _endPosition.x);
     }
 
     void SendSwipe (SwipeDirection direction)
@@ -83,27 +84,10 @@ public class SwipeDetector : MonoBehaviour
         var swipeData = new SwipeData ()
         {
             Direction = direction,
-            StartPosition = startPosition,
-            LastPosition = lastPosition,
-            EndPosition = endPosition
+            StartPosition = _startPosition,
+            LastPosition = _lastPosition,
+            EndPosition = _endPosition
         };
         OnSwipe (swipeData);
     }
-}
-
-public struct SwipeData
-{
-    public Vector2 StartPosition;
-    public Vector2 LastPosition;
-    public Vector2 EndPosition;
-    public SwipeDirection Direction;
-}
-
-public enum SwipeDirection
-{
-    NotSwipe,
-    Up,
-    Down,
-    Left,
-    Right
 }
